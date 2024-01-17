@@ -19,6 +19,7 @@ int servorawinput;
 
 uint8_t enter_calibration_count = 0;
 uint8_t calibration_required = 0;
+uint8_t calibration_enabled = 0; 		// TODO: Make eeprom readable
 uint8_t high_calibration_counts = 0;
 uint8_t high_calibration_set = 0;
 uint16_t last_high_threshold = 0;
@@ -194,7 +195,7 @@ if(!armed){
 		}
 	 if (adjusted_input == 0 && calibration_required == 0){                       // note this in input..not newinput so it will be adjusted be main loop
 	 	zero_input_count++;
-	 		}else{
+	 		}else if (calibration_enabled){
 	 	zero_input_count = 0;
 	 	if(adjusted_input > 1500){
 	 		if(getAbsDif(adjusted_input, last_input) > 50){
