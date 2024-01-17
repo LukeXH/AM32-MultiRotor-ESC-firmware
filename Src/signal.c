@@ -147,71 +147,66 @@ void transfercomplete(){
 	    }
 	}
 
-	  if (inputSet == 0){
-	 	 detectInput();
-	 	receiveDshotDma();
-	 return;
-	  }
+	if (inputSet == 0){
+		detectInput();
+		receiveDshotDma();
+		return;
+	}
 
 	if (inputSet == 1){
-
-
-
-if(dshot_telemetry){
-    if(out_put){
-//    	TIM17->CNT = 0;
-    make_dshot_package();          // this takes around 10us !!
-  	computeDshotDMA();             //this is slow too..
-  	receiveDshotDma();             //holy smokes.. reverse the line and set up dma again
-   	return;
-    }else{
-		sendDshotDma();
-    return;
-    }
-}else{
-
-		if (dshot == 1){
-			computeDshotDMA();
-			if(send_telemetry){
-            // done in 10khz routine
+		if(dshot_telemetry){
+			if(out_put){
+		//    	TIM17->CNT = 0;
+				make_dshot_package();          // this takes around 10us !!
+				computeDshotDMA();             //this is slow too..
+				receiveDshotDma();             //holy smokes.. reverse the line and set up dma again
+				return;
+			}else{
+				sendDshotDma();
+				return;
 			}
-			receiveDshotDma();
-		}
-		if  (servoPwm == 1){
-		while((INPUT_PIN_PORT->IDR & INPUT_PIN)){  // if the pin is high wait
-		}
-			computeServoInput();
-		
+		}else{
+			if (dshot == 1){
+				computeDshotDMA();
+				if(send_telemetry){
+				// done in 10khz routine
+				}
+				receiveDshotDma();
+			}
+			if  (servoPwm == 1){
+				while((INPUT_PIN_PORT->IDR & INPUT_PIN)){ } // if the pin is high wait
+				
+				computeServoInput();
+			
+				LL_TIM_IC_SetPolarity(IC_TIMER_REGISTER, IC_TIMER_CHANNEL, LL_TIM_IC_POLARITY_RISING); // setup rising pin trigger.
+				receiveDshotDma();
+				LL_DMA_EnableIT_HT(DMA1, INPUT_DMA_CHANNEL);
+			}
 
-			LL_TIM_IC_SetPolarity(IC_TIMER_REGISTER, IC_TIMER_CHANNEL, LL_TIM_IC_POLARITY_RISING); // setup rising pin trigger.
-     		receiveDshotDma();
-     	    LL_DMA_EnableIT_HT(DMA1, INPUT_DMA_CHANNEL);
 		}
+		if(!armed){
+			if (adjusted_input < 0){
+				adjusted_input = 0;
+			}
+			if (adjusted_input == 0 && calibration_required == 0){                       // note this in input..not newinput so it will be adjusted be main loop
+				zero_input_count++;
+			}else if (calibration_enabled){
+				zero_input_count = 0;
+				if(adjusted_input > 1500){
+					if(getAbsDif(adjusted_input, last_input) > 50){
+						enter_calibration_count = 0;
+					}else{
+						enter_calibration_count++;
+					}
 
-	}
-if(!armed){
-	if (adjusted_input < 0){
-		adjusted_input = 0;
+					if(enter_calibration_count >50 && (!high_calibration_set)){
+						playBeaconTune3();
+						calibration_required = 1;
+						enter_calibration_count = 0;
+					}
+					last_input = adjusted_input;
+				}
+			}
 		}
-	 if (adjusted_input == 0 && calibration_required == 0){                       // note this in input..not newinput so it will be adjusted be main loop
-	 	zero_input_count++;
-	 		}else if (calibration_enabled){
-	 	zero_input_count = 0;
-	 	if(adjusted_input > 1500){
-	 		if(getAbsDif(adjusted_input, last_input) > 50){
-	 			enter_calibration_count = 0;
-	 		}else{
-	 			enter_calibration_count++;
-	 		}
-
-	 		if(enter_calibration_count >50 && (!high_calibration_set)){
-				playBeaconTune3();
-	 			calibration_required = 1;
-	 			enter_calibration_count = 0;
-	 		}
-	 		last_input = adjusted_input;
-	 	}
-	 	}
-	}
 	}
 }
